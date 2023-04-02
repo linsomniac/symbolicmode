@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from chmod import symbolic_to_numeric_permissions
+from symbolicmode import symbolic_to_numeric_permissions
 
 
 class TestSymbolicToNumericPermissions(unittest.TestCase):
