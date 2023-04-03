@@ -9,7 +9,7 @@ Written by Sean Reifschneider and ChatGPT, 2023-03
 
 
 def symbolic_to_numeric_permissions(
-    symbolic_perm: str, is_exe_or_directory: bool = False
+        symbolic_perm: str, initial_mode: int = 0, is_directory: bool = False
 ) -> int:
     """
     Convert a symbolic file permission string to its numeric equivalent.
@@ -21,7 +21,9 @@ def symbolic_to_numeric_permissions(
 
     Args:
         symbolic_perm (str): The symbolic permission description string.
-        is_exe_or_directory (bool, optional): A boolean indicating whether the file is a directory.
+        initial_mode (int, optional): The mode to start off with.  If changing mode of an
+                existing file, this is it's current mode, and can also impact 'X'.
+        is_directory (bool, optional): A boolean indicating whether the file is a directory.
                 This affects the behavior of the `X` permission. Defaults to False.
 
     Returns:
@@ -35,6 +37,8 @@ def symbolic_to_numeric_permissions(
         >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
         0o4754
     """
+    is_exe_or_directory = True if (initial_mode & 0o111 or is_directory) else False
+
     # Define a mapping of symbolic permission characters to their corresponding numeric values
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_exe_or_directory else 0, "-": 0}
 
