@@ -13,7 +13,7 @@ pythonpath = "src"
 
 [project]
 name = "symbolicmode"
-version = "0.1"
+version = "0.2"
 authors = [
   { name="Sean Reifschneider", email="jafo00@gmail.com" },
 ]
