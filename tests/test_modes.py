@@ -53,6 +53,15 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
             symbolic_to_numeric_permissions("u=rwx,g=rx,o=r,a+t", is_directory=True), 0o1754
         )
 
+    def test_initial_modes(self):
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw", 0o777, False), 0o777)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw", 0o777, True), 0o777)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw", 0o666, False), 0o666)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o666, True), 0o777)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o666, False), 0o666)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o766, False), 0o777)
+        self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o656, False), 0o777)
+
 
 # Run the unit tests
 if __name__ == "__main__":

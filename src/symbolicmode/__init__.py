@@ -43,9 +43,9 @@ def symbolic_to_numeric_permissions(
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_exe_or_directory else 0, "-": 0}
 
     # Initialize variables to represent the numeric file mode for the owner (user), group, and others
-    owner_perm = 0
-    group_perm = 0
-    other_perm = 0
+    owner_perm = ((initial_mode >> 0) & 0o007) if initial_mode else 0
+    group_perm = ((initial_mode >> 3) & 0o007) if initial_mode else 0
+    other_perm = ((initial_mode >> 6) & 0o007) if initial_mode else 0
 
     # Initialize variables for setuid, setgid, and sticky bits
     setuid_bit = 0
