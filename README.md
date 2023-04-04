@@ -13,8 +13,6 @@ This library is fully compatible with GNU Coreutils 8.32-4.1ubuntu1, the version
 my system which I have extensively tested using fuzz testing, with the following
 exceptions:
 
-- It does not yet implement the "umask" based permissions setting (when no user
-  portion is specified on the left hand side of the operator, for example "=rx").
 - It does not yet implement the "ugo" permissions (when a "ugo" appears on the
   right hand side of the operator, for example "go=u").
 
