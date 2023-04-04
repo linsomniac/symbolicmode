@@ -43,9 +43,9 @@ def symbolic_to_numeric_permissions(
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_exe_or_directory else 0, "-": 0}
 
     # Initialize variables to represent the numeric file mode for the owner (user), group, and others
-    owner_perm = ((initial_mode >> 0) & 0o007) if initial_mode else 0
+    owner_perm = ((initial_mode >> 6) & 0o007) if initial_mode else 0
     group_perm = ((initial_mode >> 3) & 0o007) if initial_mode else 0
-    other_perm = ((initial_mode >> 6) & 0o007) if initial_mode else 0
+    other_perm = ((initial_mode >> 0) & 0o007) if initial_mode else 0
 
     # Initialize variables for setuid, setgid, and sticky bits
     setuid_bit = 4 if initial_mode & 0o4000 else 0
@@ -57,6 +57,7 @@ def symbolic_to_numeric_permissions(
 
     # Apply each instruction to the appropriate numeric file mode variables
     for instruction in instructions:
+        #@@@ print(f'instruction={instruction} {owner_perm:o}{group_perm:o}{other_perm:o}')
         # Determine which set of users the instruction applies to, the operation, and the permission
         users, operation, perms = instruction.partition("=")
         if not operation:
@@ -66,8 +67,10 @@ def symbolic_to_numeric_permissions(
 
         # Determine the numeric value of the permissions
         perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perms)
+        #@@@ print(f'perm_sum={perm_sum}')
 
         def update_perm(operation, perm_sum, current_perm):
+            #@@@ print(f'update_perm({operation}, {perm_sum:4o}, {current_perm:4o}')
             if operation == "=":
                 return perm_sum
             if operation == "+":
@@ -76,16 +79,19 @@ def symbolic_to_numeric_permissions(
 
         # Update the numeric file mode variables based on the users and operation
         if "u" in users or "a" in users:
+            #@@@ print('user')
             owner_perm = update_perm(operation, perm_sum, owner_perm)
             # Handle setuid bit
             if "s" in perms:
                 setuid_bit = 4 if operation in "+=" else 0
         if "g" in users or "a" in users:
+            #@@@ print('group')
             group_perm = update_perm(operation, perm_sum, group_perm)
             # Handle setgid bit
             if "s" in perms:
                 setgid_bit = 2 if operation in "+=" else 0
         if "o" in users or "a" in users:
+            #@@@ print('other')
             other_perm = update_perm(operation, perm_sum, other_perm)
             # Handle sticky bit
             if "t" in perms:
