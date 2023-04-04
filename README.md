@@ -30,6 +30,30 @@ USERS can be:
 - "": The empty string, only allowed with "=" for the operator.  Applies to all (like
   "a"), but applies the umask to the permissions set.
 
+Operators are:
+
+- -: Remove the PERMS to the file permissions.
+- +: Add the PERMS to the file permissions.
+- =: Set the permissions to exactly PERMS.
+
+PERMS can be a combination of the following (except for u/g/o which if specified must
+be the only, single, PERM provided:
+
+- r: Allow read access, if a directory allow reading files within.
+- w: Allow write access, if a directory allow writing or creating files.
+- x: Allow execute, or list contents if a directory.
+- X: Set "x" but only if file permissions already had an "x" set for any user, or if
+  the object is a directory.
+- s: Set UID/GID on execution, allows a program to take on the user/group permissions
+  of the executable file.
+- t: Sticky bit or restrict deletion to the file owner if a directory.  Note that
+  some system settings may prevent root from writing to non-root files in a
+  restricted deletion directory.  See "fs.protected\_regular" sysctl setting.
+- u: Take on the permissions granted to the user ("go=u").  Must be the only PERM if
+  specified.
+- g: Take on the group permissions.  Must be the only PERM if specified.
+- o: Take on the permissions granted to others.  Must be the only PERM if specified.
+
 Notes on instructions:
 
 - "=[PERMS]" sets the permissions based on the umask.  This acts like "a" was
