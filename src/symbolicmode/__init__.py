@@ -90,14 +90,14 @@ def symbolic_to_numeric_permissions(
             # Handle setuid bit
             if "s" in perms:
                 setuid_bit = 4 if operation in "+=" else 0
-            setuid_bit = 0 if perms == '' and operation == '=' and not is_directory else setuid_bit
+            setuid_bit = 0 if 's' not in perms and operation == '=' and not is_directory else setuid_bit
         if "g" in users or "a" in users:
             debug('group')
             group_perm = update_perm(operation, perm_sum, group_perm)
             # Handle setgid bit
             if "s" in perms:
                 setgid_bit = 2 if operation in "+=" else 0
-            setgid_bit = 0 if perms == '' and operation == '=' and not is_directory else setgid_bit
+            setgid_bit = 0 if 's' not in and operation == '=' and not is_directory else setgid_bit
         if "o" in users or "a" in users:
             debug('other')
             other_perm = update_perm(operation, perm_sum, other_perm)
