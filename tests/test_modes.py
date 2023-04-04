@@ -71,6 +71,8 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt", 0o737, False), 0o7440)
         self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=X", 0o737, False), 0o6440)
         self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=X", 0o737, True), 0o6441)
+        self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=Xx", 0o737, True), 0o6441)
+        self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=Xx", 0o737, False), 0o6441)
 
 
 # Run the unit tests
