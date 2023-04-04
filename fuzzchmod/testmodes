@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import re
+import shutil
+import subprocess
+import os
+import sys
+import tempfile
+from pathlib import Path
+from symbolicmode import symbolic_to_numeric_permissions
+
+for line in sys.stdin.readlines():
+    line = line.strip()
+    #umask=0777 filemode=0777 modestr=u+rwx,g+rwx,o+rwx
+    m = re.match(r'^umask=(\d+)\s+filemode=(\d+)\s+modestr=(\S+)$', line)
+    if not m:
+        print(f'Unable to match line {line}')
+        sys.exit(1)
+    umask = int(m.group(1), 8)
+    filemode = int(m.group(2), 8)
+    modestr = m.group(3)
+
+    tmpdir = tempfile.mkdtemp()
+    fn = Path(tmpdir).joinpath('file')
+    with open(fn, 'w') as fp:
+        fp.write('foo')
+    os.chmod(fn, filemode)
+    subprocess.run(['chmod', modestr, fn])
+    chmod_filemode = os.stat(fn).st_mode & 0o7777
+
+    dn = Path(tmpdir).joinpath('dir')
+    os.mkdir(dn, filemode)
+    os.chmod(dn, filemode)
+    subprocess.run(['chmod', modestr, dn])
+    chmod_dirmode = os.stat(dn).st_mode & 0o7777
+
+    our_filemode = symbolic_to_numeric_permissions(modestr, filemode, False)
+    our_dirmode = symbolic_to_numeric_permissions(modestr, filemode, True)
+
+    os.chmod(dn, 0o777)
+    shutil.rmtree(tmpdir)
+
+    status = ''
+    if our_filemode != chmod_filemode:
+        status = "  #  FILE WRONG"
+    if our_dirmode != chmod_dirmode:
+        status = "  #  DIR WRONG"
+    if our_filemode != chmod_filemode and our_dirmode != chmod_dirmode:
+        status = "  #  BOTH WRONG"
+
+    print(f'umask={umask:o} filemode={filemode:o} modestr={modestr} chmod_filemode={chmod_filemode:o} chmod_dirmode={chmod_dirmode:o} our_filemode={our_filemode:o} our_dirmode={our_dirmode:o}{status}')

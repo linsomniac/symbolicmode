@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+import random
+
+while True:
+    umask = random.randint(0, 512)
+    filemode = random.randint(0, 4096)
+
+    def randomuser():
+        for _ in range(random.randint(1, 5)):
+            #  until umask is implemented
+            yield random.choice(['u', 'g', 'o', 'a'])
+            #  Once umask is implemented
+            #yield random.choice(['', 'u', 'g', 'o', 'a'])
+    def randomoper():
+        return random.choice(['=', '+', '-'])
+    def randomperm():
+        #  once user/group/other perm is implemented
+        #if random.choice(100) > 95:
+        #    yield random.choice(['u', 'g', 'o'])
+        for _ in range(random.randint(0, 7)):
+            yield random.choice(['', 'r', 'w', 'x', 'X', 's', 't'])
+
+    def randommodes():
+        for _ in range(random.randint(1, 7)):
+            yield ''.join(randomuser()) + str(randomoper()) + ''.join(randomperm())
+
+    mode = ','.join(randommodes())
+    print(f'umask={umask:03o} filemode={filemode:04o} modestr={mode}')
+#filemode=0777 dirmode=0777 modestr=u+rwx,g+rwx,o+rwx
