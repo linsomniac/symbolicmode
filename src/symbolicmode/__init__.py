@@ -7,9 +7,12 @@ chmod from coreutils does.  For example: "a=rx,u+w" for 755
 Written by Sean Reifschneider and ChatGPT, 2023-03
 '''
 
+import os
+from typing import Union
+
 
 def symbolic_to_numeric_permissions(
-        symbolic_perm: str, initial_mode: int = 0, is_directory: bool = False
+        symbolic_perm: str, initial_mode: int = 0, is_directory: bool = False, umask: Union[int,None] = None
 ) -> int:
     """
     Convert a symbolic file permission string to its numeric equivalent.
@@ -25,6 +28,8 @@ def symbolic_to_numeric_permissions(
                 existing file, this is it's current mode, and can also impact 'X'.
         is_directory (bool, optional): A boolean indicating whether the file is a directory.
                 This affects the behavior of the `X` permission. Defaults to False.
+        umask (int, optional): Umask to use for "=[modes]" operation.  If not specified, the
+                system umask will be used.
 
     Returns:
         int: The numeric (octal) representation of the file permissions.
@@ -50,6 +55,10 @@ def symbolic_to_numeric_permissions(
     setgid_bit = 2 if initial_mode & 0o2000 else 0
     sticky_bit = 1 if initial_mode & 0o1000 else 0
 
+    if umask is None:
+        umask = os.umask(0)
+        os.umask(umask)
+
     # Parse the input symbolic permission description into a list of individual permission instructions
     instructions = symbolic_perm.split(",")
 
@@ -57,7 +66,6 @@ def symbolic_to_numeric_permissions(
         #print(s)
         pass
 
-    # Apply each instruction to the appropriate numeric file mode variables
     for instruction in instructions:
         #  set X for executable based on current perms
         if not is_directory:
@@ -71,6 +79,13 @@ def symbolic_to_numeric_permissions(
         if not operation:
             users, operation, perms = instruction.partition("-")
 
+        #  set a mask if instruction is "=[PERMS]"
+        apply_mask = ~umask if users == '' and operation in '=' else 0o7777
+        debug(f'users={users} operation={operation} perms={perms}')
+
+        if users == '' and operation in '+-':
+            raise ValueError(f"chmod does not define semantics for '{instruction}'")
+
         # Determine the numeric value of the permissions
         perm_set = set(perms)
         if 'x' in perm_set and 'X' in perm_set:
@@ -79,7 +94,7 @@ def symbolic_to_numeric_permissions(
         debug(f'perm_sum={perm_sum}')
 
         def update_perm(operation, perm_sum, current_perm):
-            debug(f'update_perm({operation}, {perm_sum:o}, {current_perm:o}')
+            debug(f'update_perm({operation}, {perm_sum:o}, {current_perm:o})')
             if operation == "=":
                 return perm_sum
             if operation == "+":
@@ -87,23 +102,23 @@ def symbolic_to_numeric_permissions(
             return current_perm & ~perm_sum
 
         # Update the numeric file mode variables based on the users and operation
-        if "u" in users or "a" in users:
+        if "u" in users or "a" in users or users == "":
             debug('user')
-            owner_perm = update_perm(operation, perm_sum, owner_perm)
+            owner_perm = update_perm(operation, perm_sum & (apply_mask >> 6), owner_perm)
             # Handle setuid bit
             if "s" in perms:
                 setuid_bit = 4 if operation in "+=" else 0
             setuid_bit = 0 if 's' not in perms and operation == '=' and not is_directory else setuid_bit
-        if "g" in users or "a" in users:
+        if "g" in users or "a" in users or users == "":
             debug('group')
-            group_perm = update_perm(operation, perm_sum, group_perm)
+            group_perm = update_perm(operation, perm_sum & (apply_mask >> 3), group_perm)
             # Handle setgid bit
             if "s" in perms:
                 setgid_bit = 2 if operation in "+=" else 0
             setgid_bit = 0 if 's' not in perms and operation == '=' and not is_directory else setgid_bit
-        if "o" in users or "a" in users:
+        if "o" in users or "a" in users or users == "":
             debug('other')
-            other_perm = update_perm(operation, perm_sum, other_perm)
+            other_perm = update_perm(operation, perm_sum & (apply_mask >> 0), other_perm)
             # Handle sticky bit
             if "t" in perms:
                 sticky_bit = 1 if operation in "+=" else 0

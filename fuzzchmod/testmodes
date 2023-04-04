@@ -25,17 +25,25 @@ for line in sys.stdin.readlines():
     with open(fn, 'w') as fp:
         fp.write('foo')
     os.chmod(fn, filemode)
-    subprocess.run(['chmod', modestr, fn])
+    old_umask = os.umask(umask)
+    r = subprocess.run(['chmod', modestr, fn])
+    if r.returncode != 0:
+        print(f'#  file chmod returned {r.returncode}')
+        continue
     chmod_filemode = os.stat(fn).st_mode & 0o7777
 
     dn = Path(tmpdir).joinpath('dir')
     os.mkdir(dn, filemode)
     os.chmod(dn, filemode)
-    subprocess.run(['chmod', modestr, dn])
+    r = subprocess.run(['chmod', modestr, dn])
+    if r.returncode != 0:
+        print(f'#  dir chmod returned {r.returncode}')
+        continue
     chmod_dirmode = os.stat(dn).st_mode & 0o7777
 
     our_filemode = symbolic_to_numeric_permissions(modestr, filemode, False)
     our_dirmode = symbolic_to_numeric_permissions(modestr, filemode, True)
+    os.umask(old_umask)
 
     os.chmod(dn, 0o777)
     shutil.rmtree(tmpdir)

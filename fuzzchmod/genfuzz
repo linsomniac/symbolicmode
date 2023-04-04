@@ -8,10 +8,7 @@ while True:
 
     def randomuser():
         for _ in range(random.randint(1, 5)):
-            #  until umask is implemented
-            yield random.choice(['u', 'g', 'o', 'a'])
-            #  Once umask is implemented
-            #yield random.choice(['', 'u', 'g', 'o', 'a'])
+            yield random.choice(['', 'u', 'g', 'o', 'a'])
     def randomoper():
         return random.choice(['=', '+', '-'])
     def randomperm():
@@ -23,8 +20,13 @@ while True:
 
     def randommodes():
         for _ in range(random.randint(1, 7)):
-            yield ''.join(randomuser()) + str(randomoper()) + ''.join(randomperm())
+            instruction = ''.join(randomuser()) + str(randomoper()) + ''.join(randomperm())
+            if instruction[0] in '+-':
+                continue
+            yield instruction
 
     mode = ','.join(randommodes())
+    if not mode:
+        continue
     print(f'umask={umask:03o} filemode={filemode:04o} modestr={mode}')
 #filemode=0777 dirmode=0777 modestr=u+rwx,g+rwx,o+rwx
