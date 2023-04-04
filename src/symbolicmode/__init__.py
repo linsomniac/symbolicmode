@@ -48,9 +48,9 @@ def symbolic_to_numeric_permissions(
     other_perm = ((initial_mode >> 6) & 0o007) if initial_mode else 0
 
     # Initialize variables for setuid, setgid, and sticky bits
-    setuid_bit = 0
-    setgid_bit = 0
-    sticky_bit = 0
+    setuid_bit = 4 if initial_mode & 0o4000 else 0
+    setgid_bit = 2 if initial_mode & 0o2000 else 0
+    sticky_bit = 1 if initial_mode & 0o1000 else 0
 
     # Parse the input symbolic permission description into a list of individual permission instructions
     instructions = symbolic_perm.split(",")
