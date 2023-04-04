@@ -37,10 +37,8 @@ def symbolic_to_numeric_permissions(
         >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
         0o4754
     """
-    is_exe_or_directory = True if (initial_mode & 0o111 or is_directory) else False
-
     # Define a mapping of symbolic permission characters to their corresponding numeric values
-    perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_exe_or_directory else 0, "-": 0}
+    perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_directory else 0, "-": 0}
 
     # Initialize variables to represent the numeric file mode for the owner (user), group, and others
     owner_perm = ((initial_mode >> 6) & 0o007) if initial_mode else 0
@@ -55,9 +53,17 @@ def symbolic_to_numeric_permissions(
     # Parse the input symbolic permission description into a list of individual permission instructions
     instructions = symbolic_perm.split(",")
 
+    def debug(s):
+        #print(s)
+        pass
+
     # Apply each instruction to the appropriate numeric file mode variables
     for instruction in instructions:
-        #@@@ print(f'instruction={instruction} {owner_perm:o}{group_perm:o}{other_perm:o}')
+        #  set X for executable based on current perms
+        if not is_directory:
+            perm_values['X'] = 1 if owner_perm & 1 or group_perm & 1 or other_perm & 1 else 0
+
+        debug(f'instruction={instruction} {owner_perm:o}{group_perm:o}{other_perm:o}')
         # Determine which set of users the instruction applies to, the operation, and the permission
         users, operation, perms = instruction.partition("=")
         if not operation:
@@ -67,10 +73,10 @@ def symbolic_to_numeric_permissions(
 
         # Determine the numeric value of the permissions
         perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perms)
-        #@@@ print(f'perm_sum={perm_sum}')
+        debug(f'perm_sum={perm_sum}')
 
         def update_perm(operation, perm_sum, current_perm):
-            #@@@ print(f'update_perm({operation}, {perm_sum:4o}, {current_perm:4o}')
+            debug(f'update_perm({operation}, {perm_sum:o}, {current_perm:o}')
             if operation == "=":
                 return perm_sum
             if operation == "+":
@@ -79,23 +85,26 @@ def symbolic_to_numeric_permissions(
 
         # Update the numeric file mode variables based on the users and operation
         if "u" in users or "a" in users:
-            #@@@ print('user')
+            debug('user')
             owner_perm = update_perm(operation, perm_sum, owner_perm)
             # Handle setuid bit
             if "s" in perms:
                 setuid_bit = 4 if operation in "+=" else 0
+            setuid_bit = 0 if perms == '' and operation == '=' and not is_directory else setuid_bit
         if "g" in users or "a" in users:
-            #@@@ print('group')
+            debug('group')
             group_perm = update_perm(operation, perm_sum, group_perm)
             # Handle setgid bit
             if "s" in perms:
                 setgid_bit = 2 if operation in "+=" else 0
+            setgid_bit = 0 if perms == '' and operation == '=' and not is_directory else setgid_bit
         if "o" in users or "a" in users:
-            #@@@ print('other')
+            debug('other')
             other_perm = update_perm(operation, perm_sum, other_perm)
             # Handle sticky bit
             if "t" in perms:
                 sticky_bit = 1 if operation in "+=" else 0
+            sticky_bit = 0 if 't' not in perms and operation == '=' else sticky_bit
 
     # Combine the numeric file modes for the owner, group, and others into a single numeric file mode
     numeric_perm = (

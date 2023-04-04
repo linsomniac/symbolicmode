@@ -64,6 +64,13 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o4656, False), 0o4777)
         self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o2656, False), 0o2777)
         self.assertEqual(symbolic_to_numeric_permissions("u+rw,g+rw,o+rw,a+X", 0o1656, False), 0o1777)
+        self.assertEqual(symbolic_to_numeric_permissions("a=", 0o7777, False), 0o0)
+        self.assertEqual(symbolic_to_numeric_permissions("a=", 0o7777, True), 0o6000)
+        self.assertEqual(symbolic_to_numeric_permissions("o+t,a=", 0o4226, False), 0o0)
+        self.assertEqual(symbolic_to_numeric_permissions("o+t,a=", 0o4226, True), 0o4000)
+        self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt", 0o737, False), 0o7440)
+        self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=X", 0o737, False), 0o6440)
+        self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=X", 0o737, True), 0o6441)
 
 
 # Run the unit tests
