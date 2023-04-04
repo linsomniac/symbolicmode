@@ -72,7 +72,7 @@ def symbolic_to_numeric_permissions(
             users, operation, perms = instruction.partition("-")
 
         # Determine the numeric value of the permissions
-        perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perms)
+        perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in set(perms))
         debug(f'perm_sum={perm_sum}')
 
         def update_perm(operation, perm_sum, current_perm):
