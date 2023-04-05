@@ -74,7 +74,15 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=Xx", 0o737, True), 0o6441)
         self.assertEqual(symbolic_to_numeric_permissions("a=t,ug+srt,o=Xx", 0o737, False), 0o6441)
 
-    def test_initial_modes(self):
+    def test_umask(self):
+        self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, False, 0o027), 0o640)
+        self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, True, 0o027), 0o4640)
+        with self.assertRaises(ValueError):
+            symbolic_to_numeric_permissions("+rw", 0o4777, True, 0o027)
+        with self.assertRaises(ValueError):
+            symbolic_to_numeric_permissions("-rw", 0o4777, True, 0o027)
+
+    def test_ugo_perms(self):
         self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, False, 0o027), 0o640)
         self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, True, 0o027), 0o4640)
         with self.assertRaises(ValueError):
