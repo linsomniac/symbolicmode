@@ -77,6 +77,10 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
     def test_initial_modes(self):
         self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, False, 0o027), 0o640)
         self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, True, 0o027), 0o4640)
+        with self.assertRaises(ValueError):
+            symbolic_to_numeric_permissions("+rw", 0o4777, True, 0o027)
+        with self.assertRaises(ValueError):
+            symbolic_to_numeric_permissions("-rw", 0o4777, True, 0o027)
 
 
 # Run the unit tests
