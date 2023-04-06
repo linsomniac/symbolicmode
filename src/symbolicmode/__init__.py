@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This module implements code for handling symbolic permissions in the way that GNU
 chmod from coreutils does.  For example: "a=rx,u+w" for 755
 
 Written by Sean Reifschneider and ChatGPT, 2023-03
-'''
+"""
 
 import os
 from typing import Union
 
 
 def symbolic_to_numeric_permissions(
-        symbolic_perm: str, initial_mode: int = 0, is_directory: bool = False, umask: Union[int,None] = None
+    symbolic_perm: str,
+    initial_mode: int = 0,
+    is_directory: bool = False,
+    umask: Union[int, None] = None,
 ) -> int:
     """
     Convert a symbolic file permission string to its numeric equivalent.
@@ -48,8 +51,9 @@ def symbolic_to_numeric_permissions(
         >>> symbolic_to_numeric_permissions("=rw", initial_mode=0o4777, is_directory=False, umask=0o027)
         0o640
     """
+
     def update_perm(operation: str, instruction_perms: int, current_perm: int) -> int:
-        'Helper function to apply `operation` to the current perms and the instruction_perms'
+        "Helper function to apply `operation` to the current perms and the instruction_perms"
         if operation == "=":
             return instruction_perms
         if operation == "+":
@@ -57,7 +61,7 @@ def symbolic_to_numeric_permissions(
         return current_perm & ~instruction_perms
 
     def parse_instruction(instruction):
-        'Helper to parse the instruction into lhs, op, rhs'
+        "Helper to parse the instruction into lhs, op, rhs"
         for op in ["=", "+", "-"]:
             if op in instruction:
                 users, _, perms = instruction.partition(op)
@@ -68,13 +72,13 @@ def symbolic_to_numeric_permissions(
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_directory else 0, "-": 0}
 
     #  bits to shift based on u/g/o
-    shift_by_user = {'u': 6, 'g': 3, 'o': 0}
+    shift_by_user = {"u": 6, "g": 3, "o": 0}
 
     # Extract initial permissions and special bits
     user_perms = (initial_mode >> 6) & 0o7
     group_perms = (initial_mode >> 3) & 0o7
     other_perms = (initial_mode >> 0) & 0o7
-    perms = {'u': user_perms, 'g': group_perms, 'o': other_perms}
+    perms = {"u": user_perms, "g": group_perms, "o": other_perms}
     setuid_bit = 4 if initial_mode & 0o4000 else 0
     setgid_bit = 2 if initial_mode & 0o2000 else 0
     sticky_bit = 1 if initial_mode & 0o1000 else 0
@@ -86,48 +90,68 @@ def symbolic_to_numeric_permissions(
     for instruction in symbolic_perm.split(","):
         users, operation, perms_str = parse_instruction(instruction)
 
-        if users == '' and operation in '+-':
+        if users == "" and operation in "+-":
             raise ValueError(f"chmod does not define semantics for '{instruction}'")
 
         #  set X value for executable based on current perms
         if not is_directory:
-            perm_values['X'] = 1 if perms['u'] & 1 or perms['g'] & 1 or perms['o'] & 1 else 0
+            perm_values["X"] = (
+                1 if perms["u"] & 1 or perms["g"] & 1 or perms["o"] & 1 else 0
+            )
 
         # calculate PERMS value
         perm_set = set(perms_str)
-        if 'x' in perm_set and 'X' in perm_set:
-            perm_set.remove('X')
-        perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perm_set)
+        if "x" in perm_set and "X" in perm_set:
+            perm_set.remove("X")  # prevent doubling "x" bit
+        perm_sum = sum(
+            perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perm_set
+        )
 
         #  handle u/g/o in PERMS
-        if ('u' in perms_str or 'g' in perms_str or 'o' in perms_str) and len(perms_str) != 1:
-            raise ValueError('If u/g/o specified on RHS, only a single letter of u/g/o can be specified')
-        perm_sum = perms['u'] if perms_str == 'u' else perm_sum
-        perm_sum = perms['g'] if perms_str == 'g' else perm_sum
-        perm_sum = perms['o'] if perms_str == 'o' else perm_sum
+        if ("u" in perms_str or "g" in perms_str or "o" in perms_str) and len(
+            perms_str
+        ) != 1:
+            raise ValueError(
+                "If u/g/o specified on RHS, only a single letter of u/g/o can be specified"
+            )
+        perm_sum = perms["u"] if perms_str == "u" else perm_sum
+        perm_sum = perms["g"] if perms_str == "g" else perm_sum
+        perm_sum = perms["o"] if perms_str == "o" else perm_sum
 
         # Update the numeric file mode variables based on the users and operation
-        effective_users = ('u', 'g', 'o') if users == '' or 'a' in users else users
+        effective_users = ("u", "g", "o") if users == "" or "a" in users else users
         for user in effective_users:
-            apply_mask = (~umask if users == '' and operation == '=' else 0o7777) >> shift_by_user[user]
+            apply_mask = (
+                ~umask if users == "" and operation == "=" else 0o7777
+            ) >> shift_by_user[user]
             perms[user] = update_perm(operation, perm_sum & apply_mask, perms[user])
             if user == "u":
                 if "s" in perms_str:
                     setuid_bit = 4 if operation in "+=" else 0
-                setuid_bit = 0 if "s" not in perms_str and operation == "=" and not is_directory else setuid_bit
+                setuid_bit = (
+                    0
+                    if "s" not in perms_str and operation == "=" and not is_directory
+                    else setuid_bit
+                )
             if user == "g":
                 if "s" in perms_str:
                     setgid_bit = 2 if operation in "+=" else 0
-                setgid_bit = 0 if "s" not in perms_str and operation == "=" and not is_directory else setgid_bit
+                setgid_bit = (
+                    0
+                    if "s" not in perms_str and operation == "=" and not is_directory
+                    else setgid_bit
+                )
             if user == "o":
                 if "t" in perms_str:
                     sticky_bit = 1 if operation in "+=" else 0
-                sticky_bit = 0 if "t" not in perms_str and operation == "=" else sticky_bit
+                sticky_bit = (
+                    0 if "t" not in perms_str and operation == "=" else sticky_bit
+                )
 
     # Combine the numeric file modes for the owner, group, and others into a single numeric file mode
     return (
         ((setuid_bit + setgid_bit + sticky_bit) << 9)
-        | (perms['u'] << 6)
-        | (perms['g'] << 3)
-        | (perms['o'])
+        | (perms["u"] << 6)
+        | (perms["g"] << 3)
+        | (perms["o"])
     )
