@@ -86,11 +86,19 @@ def symbolic_to_numeric_permissions(
         if users == '' and operation in '+-':
             raise ValueError(f"chmod does not define semantics for '{instruction}'")
 
-        # Determine the numeric value of the permissions
+        # calculate PERMS value
         perm_set = set(perms)
         if 'x' in perm_set and 'X' in perm_set:
             perm_set.remove('X')
         perm_sum = sum(perm_values.get(p, perm_values.get(p.upper(), 0)) for p in perm_set)
+
+        #  handle u/g/o in PERMS
+        if ('u' in perms or 'g' in perms or 'o' in perms) and len(perms) != 1:
+            raise ValueError('If u/g/o specified on RHS, only a single letter of u/g/o can be specified')
+        perm_sum = owner_perm if perms == 'u' else perm_sum
+        perm_sum = group_perm if perms == 'g' else perm_sum
+        perm_sum = other_perm if perms == 'o' else perm_sum
+
         debug(f'perm_sum={perm_sum}')
 
         def update_perm(operation, perm_sum, current_perm):

@@ -12,11 +12,11 @@ while True:
     def randomoper():
         return random.choice(['=', '+', '-'])
     def randomperm():
-        #  once user/group/other perm is implemented
-        #if random.choice(100) > 95:
-        #    yield random.choice(['u', 'g', 'o'])
-        for _ in range(random.randint(0, 7)):
-            yield random.choice(['', 'r', 'w', 'x', 'X', 's', 't'])
+        if random.randint(0, 100) >= 95:
+            yield random.choice(['u', 'g', 'o'])
+        else:
+            for _ in range(random.randint(0, 7)):
+                yield random.choice(['', 'r', 'w', 'x', 'X', 's', 't'])
 
     def randommodes():
         for _ in range(random.randint(1, 7)):

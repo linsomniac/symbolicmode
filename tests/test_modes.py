@@ -83,12 +83,17 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
             symbolic_to_numeric_permissions("-rw", 0o4777, True, 0o027)
 
     def test_ugo_perms(self):
-        self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, False, 0o027), 0o640)
-        self.assertEqual(symbolic_to_numeric_permissions("=rw", 0o4777, True, 0o027), 0o4640)
+        self.assertEqual(symbolic_to_numeric_permissions("g=u", 0o4755, False), 0o4775)
+        self.assertEqual(symbolic_to_numeric_permissions("a=u", 0o4755, False), 0o777)
+        self.assertEqual(symbolic_to_numeric_permissions("a=u", 0o4755, True), 0o4777)
+        self.assertEqual(symbolic_to_numeric_permissions("og=u", 0o4755, False), 0o4777)
+        self.assertEqual(symbolic_to_numeric_permissions("og=u", 0o4755, True), 0o4777)
+        self.assertEqual(symbolic_to_numeric_permissions("og+u", 0o4755, False), 0o4777)
+        self.assertEqual(symbolic_to_numeric_permissions("og-u", 0o4755, False), 0o4700)
         with self.assertRaises(ValueError):
-            symbolic_to_numeric_permissions("+rw", 0o4777, True, 0o027)
+            symbolic_to_numeric_permissions("u=go", 0o4777, True)
         with self.assertRaises(ValueError):
-            symbolic_to_numeric_permissions("-rw", 0o4777, True, 0o027)
+            symbolic_to_numeric_permissions("u=gr", 0o4777, True)
 
 
 # Run the unit tests
