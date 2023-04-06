@@ -42,6 +42,14 @@ def symbolic_to_numeric_permissions(
         >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
         0o4754
     """
+    def update_perm(operation: str, instruction_perms: int, current_perm: int) -> int:
+        'Helper function to apply `operation` to the current perms and the instruction_perms'
+        if operation == "=":
+            return instruction_perms
+        if operation == "+":
+            return current_perm | instruction_perms
+        return current_perm & ~instruction_perms
+
     # Define a mapping of symbolic permission characters to their corresponding numeric values
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_directory else 0, "-": 0}
 
@@ -92,13 +100,6 @@ def symbolic_to_numeric_permissions(
         perm_sum = owner_perm if perms == 'u' else perm_sum
         perm_sum = group_perm if perms == 'g' else perm_sum
         perm_sum = other_perm if perms == 'o' else perm_sum
-
-        def update_perm(operation, perm_sum, current_perm):
-            if operation == "=":
-                return perm_sum
-            if operation == "+":
-                return current_perm | perm_sum
-            return current_perm & ~perm_sum
 
         # Update the numeric file mode variables based on the users and operation
         if "u" in users or "a" in users or users == "":
