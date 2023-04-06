@@ -9,12 +9,45 @@ of the coreutils package.  For example:
 
 ## Status
 
-This library is fully compatible with GNU Coreutils 8.32-4.1ubuntu1, the version on
-my system which I have extensively tested using fuzz testing, with the following
-exceptions:
+This library is fully compatible with GNU Coreutils "chmod" command. It fully implements
+all mode specifiers except for the purely numeric versions ("755") that chmod does,
+as verified by manual, unit, and extensive fuzz testing.
 
-- It does not yet implement the "ugo" permissions (when a "ugo" appears on the
-  right hand side of the operator, for example "go=u").
+My fuzz testing was against version 8.32-4.1ubuntu1).  Fuzz testing tools are in the
+"fuzzchmod" directory.
+
+## Docstring
+
+Convert a symbolic file permission string to its numeric equivalent.
+
+The function takes a symbolic permission description string in the format of
+`user[=,+,-]permissions,group[=,+,-]permissions,other[=,+,-]permissions`.
+The available permission characters are `r` (read), `w` (write), `x` (execute),
+`X` (execute if a directory), `s` (setuid/setgid), and `t` (sticky bit), or a single
+character from: 'u', 'g', 'o'.
+
+Args:
+- `symbolic_perm` (str): The symbolic permission description string.
+- `initial_mode` (int, optional): The mode to start off with.  If changing mode of an
+        existing file, this is it's current mode, and can also impact 'X'.
+- `is_directory` (bool, optional): A boolean indicating whether the file is a directory.
+        This affects the behavior of the `X` permission. Defaults to False.
+- `umask` (int, optional): Umask to use for "=[modes]" operation.  If not specified, the
+        system umask will be used.
+
+Returns:
+    int: The numeric (octal) representation of the file permissions.
+
+Raises:
+    ValueError: When the permissions contain some invalid instruction.
+
+Examples:
+    >>> symbolic_to_numeric_permissions("u=rwx,g=rx,o=r")
+    0o754
+    >>> symbolic_to_numeric_permissions("u=rwX", is_directory=True)
+    0o700
+    >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
+    0o4754
 
 ## Permissions Instructions
 

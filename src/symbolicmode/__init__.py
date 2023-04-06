@@ -20,7 +20,8 @@ def symbolic_to_numeric_permissions(
     The function takes a symbolic permission description string in the format of
     `user[=,+,-]permissions,group[=,+,-]permissions,other[=,+,-]permissions`.
     The available permission characters are `r` (read), `w` (write), `x` (execute),
-    `X` (execute if a directory), `s` (setuid/setgid), and `t` (sticky bit).
+    `X` (execute if a directory), `s` (setuid/setgid), and `t` (sticky bit), or a single
+    character from: 'u', 'g', 'o'.
 
     Args:
         symbolic_perm (str): The symbolic permission description string.
@@ -33,6 +34,9 @@ def symbolic_to_numeric_permissions(
 
     Returns:
         int: The numeric (octal) representation of the file permissions.
+
+    Raises:
+        ValueError: When the permissions contain some invalid instruction.
 
     Examples:
         >>> symbolic_to_numeric_permissions("u=rwx,g=rx,o=r")
