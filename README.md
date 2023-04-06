@@ -36,12 +36,13 @@ Args:
         system umask will be used.
 
 Returns:
-    int: The numeric (octal) representation of the file permissions.
+- int: The numeric (octal) representation of the file permissions.
 
 Raises:
-    ValueError: When the permissions contain some invalid instruction.
+- ValueError: When the permissions contain some invalid instruction.
 
 Examples:
+
     >>> symbolic_to_numeric_permissions("u=rwx,g=rx,o=r")
     0o754
     >>> symbolic_to_numeric_permissions("u=rwX", is_directory=True)
