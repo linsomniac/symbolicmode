@@ -45,6 +45,8 @@ def symbolic_to_numeric_permissions(
         0o700
         >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
         0o4754
+        >>> symbolic_to_numeric_permissions("=rw", initial_mode=0o4777, is_directory=False, umask=0o027)
+        0o640
     """
     def update_perm(operation: str, instruction_perms: int, current_perm: int) -> int:
         'Helper function to apply `operation` to the current perms and the instruction_perms'

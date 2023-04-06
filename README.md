@@ -49,6 +49,8 @@ Examples:
     0o700
     >>> symbolic_to_numeric_permissions("u=rws,g=rx,o=r")
     0o4754
+    >>> symbolic_to_numeric_permissions("=rw", initial_mode=0o4777, is_directory=False, umask=0o027)
+    0o640
 
 ## Permissions Instructions
 
