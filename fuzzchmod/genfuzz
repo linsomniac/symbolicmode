@@ -8,25 +8,29 @@ while True:
 
     def randomuser():
         for _ in range(random.randint(1, 5)):
-            yield random.choice(['', 'u', 'g', 'o', 'a'])
+            yield random.choice(["", "u", "g", "o", "a"])
+
     def randomoper():
-        return random.choice(['=', '+', '-'])
+        return random.choice(["=", "+", "-"])
+
     def randomperm():
         if random.randint(0, 100) >= 95:
-            yield random.choice(['u', 'g', 'o'])
+            yield random.choice(["u", "g", "o"])
         else:
             for _ in range(random.randint(0, 7)):
-                yield random.choice(['', 'r', 'w', 'x', 'X', 's', 't'])
+                yield random.choice(["", "r", "w", "x", "X", "s", "t"])
 
     def randommodes():
         for _ in range(random.randint(1, 7)):
-            instruction = ''.join(randomuser()) + str(randomoper()) + ''.join(randomperm())
-            if instruction[0] in '+-':
+            instruction = (
+                "".join(randomuser()) + str(randomoper()) + "".join(randomperm())
+            )
+            if instruction[0] in "+-":
                 continue
             yield instruction
 
-    mode = ','.join(randommodes())
+    mode = ",".join(randommodes())
     if not mode:
         continue
-    print(f'umask={umask:03o} filemode={filemode:04o} modestr={mode}')
-#filemode=0777 dirmode=0777 modestr=u+rwx,g+rwx,o+rwx
+    print(f"umask={umask:03o} filemode={filemode:04o} modestr={mode}")
+# filemode=0777 dirmode=0777 modestr=u+rwx,g+rwx,o+rwx
