@@ -7,6 +7,15 @@ of the coreutils package.  For example:
     >>> oct(symbolic_to_numeric_permissions('a=rx,u+w'))
     '0o755'   
 
+It also has a "chmod" function:
+
+    >>> chmod('a=rx,u+w', '/tmp/foo')
+    >>> chmod('755', '/tmp/foo')
+    >>> chmod(0o755, '/tmp/foo')
+
+For convenience it can take permissions in the form of an integer, a numeric string
+or the symbolic permissions.
+
 ## Status
 
 This library is fully compatible with GNU Coreutils "chmod" command. It fully implements
@@ -16,7 +25,7 @@ as verified by manual, unit, and extensive fuzz testing.
 My fuzz testing was against version 8.32-4.1ubuntu1).  Fuzz testing tools are in the
 "fuzzchmod" directory.
 
-## Docstring
+## Docstring - symbolic\_to\_numeric\_permissions
 
 Convert a symbolic file permission string to its numeric equivalent.
 
@@ -52,10 +61,47 @@ Examples:
     >>> symbolic_to_numeric_permissions("=rw", initial_mode=0o4777, is_directory=False, umask=0o027)
     0o640
 
+## Docstring - chmod
+
+Change the mode (permissions) of a specified file or directory.
+
+The mode can be specified as an integer, a string representing an octal integer
+or as a string representing symbolic permissions (e.g., 'u=rwx,g=r,o=r').
+
+Parameters:
+- mode : int or str
+    The mode (permissions) to be applied to the file or directory. The mode can
+    be specified either as an integer, a string of digits (which are parsed as
+    an octal integer), or as a string representing symbolic permissions (e.g.,
+    'u=rwx,g=r,o=r').
+- path : str or Path
+    The path to the file or directory whose mode is to be changed.
+
+Returns: None
+
+Raises:
+- FileNotFoundError
+    If the specified file or directory does not exist.
+- PermissionError
+    If the user does not have sufficient privileges to change the mode.
+- ValueError
+    If the specified mode is invalid.
+
+Examples:
+
+    # Change the mode of a file using an octal integer:
+    chmod(0o755, '/path/to/file')
+
+    # Change the mode of a file using a digit string:
+    chmod('755', '/path/to/file')
+
+    # Change the mode of a directory using symbolic permissions
+    chmod('u=rwx,g=rx,o=r', '/path/to/directory')
+
 ## Permissions Instructions
 
 Permission instructions are 1 or more comma separated values of the form:
-"[USERS][=+-][PERMS]".
+"[ugoa...][[=+-][PERMS...]...]".
 
 USERS can be:
 

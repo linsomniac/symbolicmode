@@ -10,6 +10,8 @@ Written by Sean Reifschneider and ChatGPT, 2023-03
 import os
 import re
 from typing import Union, Iterator, Tuple
+from pathlib import Path
+import stat
 
 
 def symbolic_to_numeric_permissions(
@@ -153,3 +155,58 @@ def symbolic_to_numeric_permissions(
         | (perms["g"] << 3)
         | (perms["o"])
     )
+
+
+def chmod(mode: Union[int, str], path: Union[str, Path]) -> None:
+    """
+    Change the mode (permissions) of a specified file or directory.
+
+    The mode can be specified as an integer, a string representing an octal integer
+    or as a string representing symbolic permissions (e.g., 'u=rwx,g=r,o=r').
+
+    Parameters
+    ----------
+    mode : int or str
+        The mode (permissions) to be applied to the file or directory. The mode can
+        be specified either as an integer, a string of digits (which are parsed as
+        an octal integer), or as a string representing symbolic permissions (e.g.,
+        'u=rwx,g=r,o=r').
+    path : str or Path
+        The path to the file or directory whose mode is to be changed.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file or directory does not exist.
+    PermissionError
+        If the user does not have sufficient privileges to change the mode.
+    ValueError
+        If the specified mode is invalid.
+
+    Examples
+    --------
+    # Change the mode of a file using an octal integer:
+    chmod(0o755, '/path/to/file')
+
+    # Change the mode of a file using a digit string:
+    chmod('755', '/path/to/file')
+
+    # Change the mode of a directory using symbolic permissions
+    chmod('u=rwx,g=rx,o=r', '/path/to/directory')
+    """
+    if type(mode) is str:
+        if set(mode).issubset("01234567"):
+            mode = int(mode, 8)
+        else:
+            path_stat = os.stat(path)
+            path_mode = stat.S_IMODE(path_stat.st_mode)
+            path_is_directory = stat.S_ISDIR(path_stat.st_mode)
+            mode = symbolic_to_numeric_permissions(
+                mode, initial_mode=path_mode, is_directory=path_is_directory
+            )
+
+    os.chmod(path, mode)

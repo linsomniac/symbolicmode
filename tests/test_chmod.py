@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import unittest
+from symbolicmode import chmod
+import tempfile
+import os
+import stat
+
+
+class TestChmod(unittest.TestCase):
+    def setUp(self):
+        self.tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        self.tmp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        os.unlink(self.tmp_file.name)
+        self.tmp_dir.cleanup()
+
+    def test_chmod_octal_integer(self):
+        new_mode = 0o755
+        chmod(0o755, self.tmp_file.name)
+        self.assertEqual(stat.S_IMODE(os.stat(self.tmp_file.name).st_mode), 0o755)
+
+    def test_chmod_octal_string(self):
+        chmod("755", self.tmp_file.name)
+        self.assertEqual(stat.S_IMODE(os.stat(self.tmp_file.name).st_mode), 0o755)
+
+    def test_chmod_symbolic_permissions(self):
+        new_mode = "u=rwx,g=rx,o=r"
+        chmod(new_mode, self.tmp_dir.name)
+        self.assertEqual(stat.S_IMODE(os.stat(self.tmp_dir.name).st_mode), 0o754)
+
+
+# Run the unit tests
+if __name__ == "__main__":
+    unittest.main()
