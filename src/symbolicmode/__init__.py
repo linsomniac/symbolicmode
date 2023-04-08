@@ -8,7 +8,8 @@ Written by Sean Reifschneider and ChatGPT, 2023-03
 """
 
 import os
-from typing import Union
+import re
+from typing import Union, Iterator, Tuple
 
 
 def symbolic_to_numeric_permissions(
@@ -60,13 +61,17 @@ def symbolic_to_numeric_permissions(
             return current_perm | instruction_perms
         return current_perm & ~instruction_perms
 
-    def parse_instruction(instruction):
-        "Helper to parse the instruction into lhs, op, rhs"
-        for op in ["=", "+", "-"]:
-            if op in instruction:
-                users, _, perms = instruction.partition(op)
-                return users, op, perms
-        raise ValueError(f"Invalid instruction: {instruction}")
+    def parse_instructions(permstr: str) -> Iterator[Tuple[str, str, str]]:
+        """Helper to parse the instruction into (lhs, op, rhs).  This also expands
+        multi-operation expressions into multiple u/op/perm tuples."""
+        rx = re.compile(r"([=+-][rwxXstugo]*)")
+        for instruction in permstr.split(","):
+            m = rx.split(instruction)
+            if not m:
+                raise ValueError(f"Invalid instruction: {instruction}")
+            user = m[0]
+            for op, perm in [(op_perm[0], op_perm[1:]) for op_perm in m[1::2]]:
+                yield ((user, op, perm))
 
     # Define a mapping of symbolic permission characters to their corresponding numeric values
     perm_values = {"r": 4, "w": 2, "x": 1, "X": 1 if is_directory else 0, "-": 0}
@@ -87,12 +92,7 @@ def symbolic_to_numeric_permissions(
         umask = os.umask(0)
         os.umask(umask)
 
-    for instruction in symbolic_perm.split(","):
-        users, operation, perms_str = parse_instruction(instruction)
-
-        if users == "" and operation in "+-":
-            raise ValueError(f"chmod does not define semantics for '{instruction}'")
-
+    for users, operation, perms_str in parse_instructions(symbolic_perm):
         #  set X value for executable based on current perms
         if not is_directory:
             perm_values["X"] = (
@@ -121,9 +121,7 @@ def symbolic_to_numeric_permissions(
         # Update the numeric file mode variables based on the users and operation
         effective_users = ("u", "g", "o") if users == "" or "a" in users else users
         for user in effective_users:
-            apply_mask = (
-                ~umask if users == "" and operation == "=" else 0o7777
-            ) >> shift_by_user[user]
+            apply_mask = (~umask if users == "" else 0o7777) >> shift_by_user[user]
             perms[user] = update_perm(operation, perm_sum & apply_mask, perms[user])
             if user == "u":
                 if "s" in perms_str:

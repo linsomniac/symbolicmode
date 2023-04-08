@@ -9,14 +9,9 @@ of the coreutils package.  For example:
 
 ## Status
 
-<!--
 This library is fully compatible with GNU Coreutils "chmod" command. It fully implements
 all mode specifiers except for the purely numeric versions ("755") that chmod does,
 as verified by manual, unit, and extensive fuzz testing.
--->
-
-This fully implements all single-operator permission instructions: "ug=rw".  The last
-thing I'm aware of left to implement is multiple-operator instructions: "ug=rw+x-w".
 
 My fuzz testing was against version 8.32-4.1ubuntu1).  Fuzz testing tools are in the
 "fuzzchmod" directory.

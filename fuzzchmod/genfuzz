@@ -22,12 +22,19 @@ while True:
 
     def randommodes():
         for _ in range(random.randint(1, 7)):
-            instruction = (
-                "".join(randomuser()) + str(randomoper()) + "".join(randomperm())
-            )
+            instruction = "".join(randomuser()) + str("".join(randomopperm()))
+            if instruction == "":
+                continue
             if instruction[0] in "+-":
                 continue
             yield instruction
+
+    def randomopperm():
+        for _ in range(random.randint(1, 5)):
+            perm = "".join(randomperm())
+            if perm == "":
+                perm = "="
+            yield randomoper() + perm
 
     mode = ",".join(randommodes())
     if not mode:

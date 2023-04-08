@@ -11,6 +11,7 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(symbolic_to_numeric_permissions("u=rwx,g=,o="), 0o700)
         self.assertEqual(symbolic_to_numeric_permissions("a=r"), 0o444)
         self.assertEqual(symbolic_to_numeric_permissions("a=-,ug+r,u+w"), 0o640)
+        self.assertEqual(symbolic_to_numeric_permissions("+X", 0o500), 0o511)
 
     def test_add_permissions(self):
         self.assertEqual(symbolic_to_numeric_permissions("u=rw,g=r,o=,ug+w"), 0o660)
@@ -118,10 +119,6 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(
             symbolic_to_numeric_permissions("=rw", 0o4777, True, 0o027), 0o4640
         )
-        with self.assertRaises(ValueError):
-            symbolic_to_numeric_permissions("+rw", 0o4777, True, 0o027)
-        with self.assertRaises(ValueError):
-            symbolic_to_numeric_permissions("-rw", 0o4777, True, 0o027)
 
     def test_ugo_perms(self):
         self.assertEqual(symbolic_to_numeric_permissions("g=u", 0o4755, False), 0o4775)
@@ -135,6 +132,57 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
             symbolic_to_numeric_permissions("u=go", 0o4777, True)
         with self.assertRaises(ValueError):
             symbolic_to_numeric_permissions("u=gr", 0o4777, True)
+
+    def test_multi_operator(self):
+        self.assertEqual(symbolic_to_numeric_permissions("g=u", 0o4755, False), 0o4775)
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw-x,g=r-x,o=r", 0o0777, False), 0o644
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw-x,g=r-x,o=r", 0o0777, True), 0o644
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=r+x,g=u-x,o=g", 0o0777, False), 0o544
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=r+x,g=u-x,o=g", 0o0777, True), 0o544
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=u-x,o=g+r", 0o0777, False), 0o666
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=u-x,o=g+r", 0o0777, True), 0o666
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rwx,g=u-wx,o=r", 0o0777, False), 0o744
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rwx,g=u-wx,o=r", 0o0777, True), 0o744
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=w,o=x", 0o0777, False), 0o621
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=w,o=x", 0o0777, True), 0o621
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw-x,g=rw,o=g-x", 0o0777, False), 0o666
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw-x,g=rw,o=g-x", 0o0777, True), 0o666
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=r-x,g=wx,o=rw", 0o0777, False), 0o436
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=r-x,g=wx,o=rw", 0o0777, True), 0o436
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=u+x,o=g-rx", 0o0777, False), 0o672
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u=rw,g=u+x,o=g-rx", 0o0777, True), 0o672
+        )
 
 
 # Run the unit tests

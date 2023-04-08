@@ -26,23 +26,35 @@ for line in sys.stdin.readlines():
         fp.write("foo")
     os.chmod(fn, filemode)
     old_umask = os.umask(umask)
-    r = subprocess.run(["chmod", modestr, fn])
+    r = subprocess.run(["chmod", modestr, fn], capture_output=True)
     if r.returncode != 0:
         print(f"#  file chmod returned {r.returncode}")
-        continue
-    chmod_filemode = os.stat(fn).st_mode & 0o7777
+        chmod_filemode = "ERROR"
+    else:
+        chmod_filemode = os.stat(fn).st_mode & 0o7777
+        chmod_filemode = f"{chmod_filemode:o}"
 
     dn = Path(tmpdir).joinpath("dir")
     os.mkdir(dn, filemode)
     os.chmod(dn, filemode)
-    r = subprocess.run(["chmod", modestr, dn])
+    r = subprocess.run(["chmod", modestr, dn], capture_output=True)
     if r.returncode != 0:
         print(f"#  dir chmod returned {r.returncode}")
-        continue
-    chmod_dirmode = os.stat(dn).st_mode & 0o7777
+        chmod_dirmode = "ERROR"
+    else:
+        chmod_dirmode = os.stat(dn).st_mode & 0o7777
+        chmod_dirmode = f"{chmod_dirmode:o}"
 
-    our_filemode = symbolic_to_numeric_permissions(modestr, filemode, False, umask)
-    our_dirmode = symbolic_to_numeric_permissions(modestr, filemode, True, umask)
+    try:
+        our_filemode = symbolic_to_numeric_permissions(modestr, filemode, False, umask)
+        our_filemode = f"{our_filemode:o}"
+    except ValueError:
+        our_filemode = "ERROR"
+    try:
+        our_dirmode = symbolic_to_numeric_permissions(modestr, filemode, True, umask)
+        our_dirmode = f"{our_dirmode:o}"
+    except ValueError:
+        our_dirmode = "ERROR"
     os.umask(old_umask)
 
     os.chmod(dn, 0o777)
@@ -57,5 +69,5 @@ for line in sys.stdin.readlines():
         status = "  #  BOTH WRONG"
 
     print(
-        f"umask={umask:o} filemode={filemode:o} modestr={modestr} chmod_filemode={chmod_filemode:o} chmod_dirmode={chmod_dirmode:o} our_filemode={our_filemode:o} our_dirmode={our_dirmode:o}{status}"
+        f"umask={umask:o} filemode={filemode:o} modestr={modestr} chmod_filemode={chmod_filemode} chmod_dirmode={chmod_dirmode} our_filemode={our_filemode} our_dirmode={our_dirmode}{status}"
     )
