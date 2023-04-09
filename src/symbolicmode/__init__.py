@@ -157,7 +157,7 @@ def symbolic_to_numeric_permissions(
     )
 
 
-def chmod(mode: Union[int, str], path: Union[str, Path]) -> None:
+def chmod(mode: Union[int, str], path: Union[str, Path], recurse: bool = False) -> None:
     """
     Change the mode (permissions) of a specified file or directory.
 
@@ -173,6 +173,9 @@ def chmod(mode: Union[int, str], path: Union[str, Path]) -> None:
         'u=rwx,g=r,o=r').
     path : str or Path
         The path to the file or directory whose mode is to be changed.
+    recurse : bool (default False)
+        If true and "path" is a directory, do a depth-first recursion applying `mode`
+        to the directory and all objects below it.
 
     Returns
     -------
@@ -198,15 +201,30 @@ def chmod(mode: Union[int, str], path: Union[str, Path]) -> None:
     # Change the mode of a directory using symbolic permissions
     chmod('u=rwx,g=rx,o=r', '/path/to/directory')
     """
+
+    def recurse_chmod(mode: Union[int, str], directory: Union[str, Path]) -> None:
+        "Recursively apply chmod"
+        for dir_path, dirnames, filenames in os.walk(directory, topdown=False):
+            for filename in filenames:
+                chmod(mode, os.path.join(dir_path, filename), recurse=False)
+            for dirname in dirnames:
+                chmod(mode, os.path.join(dir_path, dirname), recurse=False)
+
+    mode_is_sym_str = type(mode) is str and not set(mode).issubset("01234567")
+
+    if recurse or mode_is_sym_str:
+        path_stat = os.stat(path)
+        path_is_directory = stat.S_ISDIR(path_stat.st_mode)
+        if path_is_directory and recurse:
+            recurse_chmod(mode, path)
+
     if type(mode) is str:
-        if set(mode).issubset("01234567"):
+        if not mode_is_sym_str:
             mode = int(mode, 8)
         else:
-            path_stat = os.stat(path)
-            path_mode = stat.S_IMODE(path_stat.st_mode)
-            path_is_directory = stat.S_ISDIR(path_stat.st_mode)
+            path_mode = stat.S_IMODE(path_stat.st_mode)  # type: ignore
             mode = symbolic_to_numeric_permissions(
-                mode, initial_mode=path_mode, is_directory=path_is_directory
+                mode, initial_mode=path_mode, is_directory=path_is_directory  # type: ignore
             )
 
-    os.chmod(path, mode)
+    os.chmod(path, mode)  # type: ignore

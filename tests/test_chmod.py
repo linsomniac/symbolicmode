@@ -30,6 +30,24 @@ class TestChmod(unittest.TestCase):
         chmod(new_mode, self.tmp_dir.name)
         self.assertEqual(stat.S_IMODE(os.stat(self.tmp_dir.name).st_mode), 0o754)
 
+    def test_recursive(self):
+        topdir = os.path.join(self.tmp_dir.name, "topdir")
+        os.mkdir(topdir)
+        topfile = os.path.join(topdir, "topfile")
+        with open(topfile, "w") as fp:
+            fp.write("TopFile")
+        lowerdir = os.path.join(topdir, "lowerdir")
+        os.mkdir(lowerdir)
+        lowerfile = os.path.join(lowerdir, "lowerfile")
+        with open(lowerfile, "w") as fp:
+            fp.write("LowerFile")
+
+        chmod("u=rx,go=", topdir, recurse=True)
+        self.assertEqual(stat.S_IMODE(os.stat(topdir).st_mode), 0o500)
+        self.assertEqual(stat.S_IMODE(os.stat(topfile).st_mode), 0o500)
+        self.assertEqual(stat.S_IMODE(os.stat(lowerdir).st_mode), 0o500)
+        self.assertEqual(stat.S_IMODE(os.stat(lowerfile).st_mode), 0o500)
+
 
 # Run the unit tests
 if __name__ == "__main__":
