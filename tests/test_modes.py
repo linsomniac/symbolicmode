@@ -12,6 +12,12 @@ class TestSymbolicToNumericPermissions(unittest.TestCase):
         self.assertEqual(symbolic_to_numeric_permissions("a=r"), 0o444)
         self.assertEqual(symbolic_to_numeric_permissions("a=-,ug+r,u+w"), 0o640)
         self.assertEqual(symbolic_to_numeric_permissions("+X", 0o500), 0o511)
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u+rwx,g+rwx,o=rwx", 0o000), 0o777
+        )
+        self.assertEqual(
+            symbolic_to_numeric_permissions("u+rwx,g+rwx,o=rwx", 0o000, True), 0o777
+        )
 
     def test_add_permissions(self):
         self.assertEqual(symbolic_to_numeric_permissions("u=rw,g=r,o=,ug+w"), 0o660)
