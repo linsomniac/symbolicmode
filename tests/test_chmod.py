@@ -48,6 +48,9 @@ class TestChmod(unittest.TestCase):
         self.assertEqual(stat.S_IMODE(os.stat(lowerdir).st_mode), 0o500)
         self.assertEqual(stat.S_IMODE(os.stat(lowerfile).st_mode), 0o500)
 
+        #  clean up, allow removal
+        chmod("u=rwx,go=", topdir, recurse=True)
+
 
 # Run the unit tests
 if __name__ == "__main__":
