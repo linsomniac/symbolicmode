@@ -18,16 +18,16 @@ class TestChmod(unittest.TestCase):
 
     def test_chmod_octal_integer(self):
         new_mode = 0o755
-        chmod(0o755, self.tmp_file.name)
+        chmod(self.tmp_file.name, 0o755)
         self.assertEqual(stat.S_IMODE(os.stat(self.tmp_file.name).st_mode), 0o755)
 
     def test_chmod_octal_string(self):
-        chmod("755", self.tmp_file.name)
+        chmod(self.tmp_file.name, "755")
         self.assertEqual(stat.S_IMODE(os.stat(self.tmp_file.name).st_mode), 0o755)
 
     def test_chmod_symbolic_permissions(self):
         new_mode = "u=rwx,g=rx,o=r"
-        chmod(new_mode, self.tmp_dir.name)
+        chmod(self.tmp_dir.name, new_mode)
         self.assertEqual(stat.S_IMODE(os.stat(self.tmp_dir.name).st_mode), 0o754)
 
     def test_recursive(self):
@@ -42,14 +42,14 @@ class TestChmod(unittest.TestCase):
         with open(lowerfile, "w") as fp:
             fp.write("LowerFile")
 
-        chmod("u=rx,go=", topdir, recurse=True)
+        chmod(topdir, "u=rx,go=", recurse=True)
         self.assertEqual(stat.S_IMODE(os.stat(topdir).st_mode), 0o500)
         self.assertEqual(stat.S_IMODE(os.stat(topfile).st_mode), 0o500)
         self.assertEqual(stat.S_IMODE(os.stat(lowerdir).st_mode), 0o500)
         self.assertEqual(stat.S_IMODE(os.stat(lowerfile).st_mode), 0o500)
 
         #  clean up, allow removal
-        chmod("u=rwx,go=", topdir, recurse=True)
+        chmod(topdir, "u=rwx,go=", recurse=True)
 
 
 # Run the unit tests

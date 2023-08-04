@@ -183,7 +183,7 @@ def symbolic_to_numeric_permissions(
     )
 
 
-def chmod(mode: Union[int, str], path: Union[str, Path], recurse: bool = False) -> None:
+def chmod(path: Union[str, Path], mode: Union[int, str], recurse: bool = False) -> None:
     """
     Change the mode (permissions) of a specified file or directory.
 
@@ -192,13 +192,13 @@ def chmod(mode: Union[int, str], path: Union[str, Path], recurse: bool = False) 
 
     Parameters
     ----------
+    path : str or Path
+        The path to the file or directory whose mode is to be changed.
     mode : int or str
         The mode (permissions) to be applied to the file or directory. The mode can
         be specified either as an integer, a string of digits (which are parsed as
         an octal integer), or as a string representing symbolic permissions (e.g.,
         'u=rwx,g=r,o=r').
-    path : str or Path
-        The path to the file or directory whose mode is to be changed.
     recurse : bool (default False)
         If true and "path" is a directory, do a depth-first recursion applying `mode`
         to the directory and all objects below it.
@@ -219,22 +219,22 @@ def chmod(mode: Union[int, str], path: Union[str, Path], recurse: bool = False) 
     Examples
     --------
     # Change the mode of a file using an octal integer:
-    chmod(0o755, '/path/to/file')
+    chmod('/path/to/file', 0o755)
 
     # Change the mode of a file using a digit string:
-    chmod('755', '/path/to/file')
+    chmod('/path/to/file', '755')
 
     # Change the mode of a directory using symbolic permissions
-    chmod('u=rwx,g=rx,o=r', '/path/to/directory')
+    chmod('/path/to/directory', 'u=rwx,g=rx,o=r')
     """
 
-    def recurse_chmod(mode: Union[int, str], directory: Union[str, Path]) -> None:
+    def recurse_chmod(directory: Union[str, Path], mode: Union[int, str]) -> None:
         "Recursively apply chmod"
         for dir_path, dirnames, filenames in os.walk(directory, topdown=False):
             for filename in filenames:
-                chmod(mode, os.path.join(dir_path, filename), recurse=False)
+                chmod(os.path.join(dir_path, filename), mode, recurse=False)
             for dirname in dirnames:
-                chmod(mode, os.path.join(dir_path, dirname), recurse=False)
+                chmod(os.path.join(dir_path, dirname), mode, recurse=False)
 
     mode_is_sym_str = type(mode) is str and not set(mode).issubset("01234567")
 
@@ -242,7 +242,7 @@ def chmod(mode: Union[int, str], path: Union[str, Path], recurse: bool = False) 
         path_stat = os.stat(path)
         path_is_directory = stat.S_ISDIR(path_stat.st_mode)
         if path_is_directory and recurse:
-            recurse_chmod(mode, path)
+            recurse_chmod(path, mode)
 
     if type(mode) is str:
         if not mode_is_sym_str:
